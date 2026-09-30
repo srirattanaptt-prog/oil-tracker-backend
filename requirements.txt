@@ -2,3 +2,5 @@ yfinance
 pandas
 pytz
 requests
+gspread
+oauth2client
