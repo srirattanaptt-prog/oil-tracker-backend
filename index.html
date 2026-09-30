@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>แนวโน้มราคาน้ำมัน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* โครงสร้าง CSS เดิมทั้งหมด 100% */
+    :root {
+      --bg: #FDF6E3; --card-bg: #FCFBF7; --border: #E8DFCE;
+      --text-main: #3C4242; --text-muted: #7E8585;
+      --up-color: #2E7D32; --down-color: #C62828;
+      --accent: #EEE8D5; --dot-green: #38A169; --dot-red: #E53E3E;
+      --proxy-btn: #4A5568;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px; }
+    .container { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 16px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px; }
+    .sync-status-group { display: flex; gap: 8px; }
+    .status-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 9999px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; user-select: none; transition: all 0.2s ease; }
+    .status-btn:hover { border-color: #CBD5E0; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--dot-green); transition: background-color 0.2s ease; }
+    .dot.offline { background-color: var(--dot-red); }
+    .toggle-advance { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 9999px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; }
+    .toggle-advance:hover { background: var(--accent); color: var(--text-main); }
+    .toggle-advance.active { background: var(--accent); border-color: #D6CDB8; color: var(--text-main); font-weight: 600; }
+    .platform-header { text-align: center; margin: 4px 0 8px 0; }
+    .platform-title { font-size: 24px; font-weight: 700; color: var(--text-main); letter-spacing: -0.3px; }
+    .platform-datetime { font-size: 13px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .input-grid { grid-template-columns: 1fr; } }
+    .input-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+    .input-box label { font-size: 12px; color: var(--text-muted); font-weight: 400; display: flex; justify-content: space-between; align-items: center; }
+    .input-box input { border: none; outline: none; background: transparent; font-size: 17px; font-weight: 600; color: var(--text-main); width: 100%; }
+    .btn-proxy { background: var(--proxy-btn); color: white; border: none; border-radius: 6px; padding: 2px 6px; font-size: 10px; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
+    .btn-proxy:hover { opacity: 1; }
+    .btn-proxy:disabled { background: #CBD5E0; cursor: wait; }
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 480px) { .cards-grid { grid-template-columns: 1fr; } }
+    .fuel-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; box-shadow: 0 4px 12px rgba(60, 66, 66, 0.03); transition: transform 0.2s ease; }
+    .fuel-card:hover { transform: translateY(-2px); }
+    .logo-container { height: 48px; display: flex; align-items: center; justify-content: center; }
+    .fuel-logo { max-height: 44px; max-width: 140px; object-fit: contain; }
+    .result-value { font-size: 46px; font-weight: 700; display: flex; align-items: center; gap: 6px; line-height: 1; letter-spacing: -1px; }
+    .result-value.up { color: var(--up-color); }
+    .result-value.down { color: var(--down-color); }
+    .arrow { font-size: 38px; }
+    .advance-panel { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; font-size: 13px; line-height: 1.7; color: var(--text-muted); animation: fadeIn 0.25s ease; }
+    .advance-panel.show { display: block; }
+    .advance-title { font-weight: 600; color: var(--text-main); margin-bottom: 8px; font-size: 14px; }
+    .advance-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; background: #F8F3E6; padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+    .mini-input-box { display: flex; flex-direction: column; gap: 2px; }
+    .mini-input-box label { font-size: 11px; color: var(--text-muted); }
+    .mini-input-box input { border: 1px solid #D6CDB8; background: #FFFFFF; border-radius: 6px; padding: 4px 8px; font-size: 13px; font-weight: 600; color: var(--text-main); outline: none; }
+    .step-item { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+    .step-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .proxy-info { font-size: 10px; color: #7E8585; margin-top: 4px; font-style: italic; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="top-bar">
+      <div class="sync-status-group">
+        <button class="status-btn" id="btnSyncServer" title="คลิกเพื่ออัปเดตข้อมูลล่าสุดจาก Server">
+          <span class="dot offline" id="dotServer"></span>
+          <span>Sync Database</span>
+        </button>
+      </div>
+      <button class="toggle-advance" id="btnToggleAdvance">
+        <span>Advance</span>
+      </button>
+    </div>
+
+    <div class="platform-header">
+      <h1 class="platform-title">แนวโน้มราคาน้ำมัน</h1>
+      <div class="platform-datetime" id="liveDateTime">กำลังโหลดวันที่และเวลา...</div>
+    </div>
+
+    <!-- Inputs Row -->
+    <div class="input-grid">
+      <div class="input-box">
+        <label for="mopsDiesel">
+          <span>ΔMOPS ดีเซล (SGD/BBL)</span>
+          <button class="btn-proxy" id="btnProxyDiesel" title="เชื่อมต่อ Python Engine เพื่อดึงค่า Proxy">ดึงค่าจากระบบ</button>
+        </label>
+        <input type="number" id="mopsDiesel" step="0.01" value="0.00" />
+        <div class="proxy-info" id="infoProxyDiesel"></div>
+      </div>
+      <div class="input-box">
+        <label for="mopsG95">
+          <span>ΔMOPS เบนซิน G95 (SGD/BBL)</span>
+          <button class="btn-proxy" id="btnProxyG95" title="เชื่อมต่อ Python Engine เพื่อดึงค่า Proxy">ดึงค่าจากระบบ</button>
+        </label>
+        <input type="number" id="mopsG95" step="0.01" value="0.00" />
+        <div class="proxy-info" id="infoProxyG95"></div>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="fuel-card">
+        <div class="logo-container">
+          <img class="fuel-logo" src="Diesel.png" alt="ดีเซล Diesel" />
+        </div>
+        <div class="result-value" id="resDiesel">0.00</div>
+      </div>
+      <div class="fuel-card">
+        <div class="logo-container">
+          <img class="fuel-logo" src="G95.png" alt="แก๊สโซฮอล์ 95 Gasohol 95" />
+        </div>
+        <div class="result-value" id="resG95">0.00</div>
+      </div>
+    </div>
+
+    <div class="advance-panel" id="advancePanel">
+      <div class="advance-title">ตั้งค่าตัวแปรค่าการตลาด (Dynamic Margin Inputs)</div>
+      <div class="advance-controls-grid">
+        <div class="mini-input-box">
+          <label>มาร์จิ้นดีเซลเมื่อวาน (บาท/ลิตร)</label>
+          <input type="number" id="inputMarginDiesel" step="0.0001" value="2.0000" />
+        </div>
+        <div class="mini-input-box">
+          <label>เกณฑ์เป้าหมาย ดีเซล (บาท/ลิตร)</label>
+          <input type="number" id="inputTargetDiesel" step="0.0001" value="1.9100" />
+        </div>
+        <div class="mini-input-box">
+          <label>มาร์จิ้น G95 เมื่อวาน (บาท/ลิตร)</label>
+          <input type="number" id="inputMarginG95" step="0.0001" value="3.3500" />
+        </div>
+        <div class="mini-input-box">
+          <label>เกณฑ์เป้าหมาย G95 (บาท/ลิตร)</label>
+          <input type="number" id="inputTargetG95" step="0.0001" value="3.2500" />
+        </div>
+      </div>
+
+      <div class="advance-title">วิธีทำและการแทนค่าสูตรละเอียด</div>
+      <div class="step-item" id="advDieselCalc"></div>
+      <div class="step-item" id="advG95Calc"></div>
+      <div style="font-size: 11px; margin-top: 8px;">
+        * อัตราแลกเปลี่ยน SGD/THB = <span id="advFxVal">26.1346</span> (ΔFX ที่ใช้คำนวณ: <span id="advDfxVal">+0.0000</span>) | ตัวคูณ FX: ดีเซล = 1.10, G95 = 0.80
+      </div>
+      <div class="proxy-info" id="lastUpdateInfo" style="margin-top: 8px;">สถานะ: กำลังรอข้อมูลจาก Python Server...</div>
+    </div>
+  </div>
+
+  <script>
+    const STATE = {
+      diesel: { yesterdayMargin: 2.0000, targetMargin: 1.9100, factorMops: 0.165, factorFx: 1.10 },
+      g95: { yesterdayMargin: 3.3500, targetMargin: 3.2500, factorMops: 0.152, factorFx: 0.80 },
+      fxRate: 26.1346, dFx: 0.0000,
+      showAdvance: false,
+      serverSynced: false
+    };
+
+    const inputMopsDiesel = document.getElementById("mopsDiesel");
+    const inputMopsG95 = document.getElementById("mopsG95");
+    const resDiesel = document.getElementById("resDiesel");
+    const resG95 = document.getElementById("resG95");
+    const btnSyncServer = document.getElementById("btnSyncServer");
+    const dotServer = document.getElementById("dotServer");
+    const btnToggleAdvance = document.getElementById("btnToggleAdvance");
+    const advancePanel = document.getElementById("advancePanel");
+    const advDieselCalc = document.getElementById("advDieselCalc");
+    const advG95Calc = document.getElementById("advG95Calc");
+    const advFxVal = document.getElementById("advFxVal");
+    const liveDateTime = document.getElementById("liveDateTime");
+    const lastUpdateInfo = document.getElementById("lastUpdateInfo");
+
+    const inputMarginDiesel = document.getElementById("inputMarginDiesel");
+    const inputTargetDiesel = document.getElementById("inputTargetDiesel");
+    const inputMarginG95 = document.getElementById("inputMarginG95");
+    const inputTargetG95 = document.getElementById("inputTargetG95");
+
+    const btnProxyDiesel = document.getElementById("btnProxyDiesel");
+    const btnProxyG95 = document.getElementById("btnProxyG95");
+    const infoProxyDiesel = document.getElementById("infoProxyDiesel");
+    const infoProxyG95 = document.getElementById("infoProxyG95");
+
+    function updateClock() {
+      const now = new Date();
+      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      liveDateTime.textContent = `${now.getDate()} ${thaiMonths[now.getMonth()]} ${now.getFullYear() + 543} เวลา ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} น.`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 🌟 ระบบดึงข้อมูลใหม่: วิ่งไปอ่านไฟล์ data.json ที่รันมาจาก Python 🌟
+    async function loadDataFromServer(isManualClick = false) {
+      if(isManualClick) {
+        btnSyncServer.disabled = true;
+        btnProxyDiesel.innerText = "กำลังดึง...";
+        btnProxyG95.innerText = "กำลังดึง...";
+      }
+      
+      try {
+        // เติม ?t=Date.now() เพื่อป้องกัน Browser Cache
+        const response = await fetch("data.json?t=" + Date.now());
+        if (!response.ok) throw new Error("ไม่สามารถอ่านไฟล์ Database ได้");
+        
+        const data = await response.json();
+        
+        // อัปเดตข้อมูลเข้าสู่ State และช่องกรอก UI อัตโนมัติ
+        if (data.dieselMopsDiff !== undefined) inputMopsDiesel.value = data.dieselMopsDiff;
+        if (data.g95MopsDiff !== undefined) inputMopsG95.value = data.g95MopsDiff;
+        if (data.eppoDieselMargin) inputMarginDiesel.value = data.eppoDieselMargin.toFixed(4);
+        if (data.eppoG95Margin) inputMarginG95.value = data.eppoG95Margin.toFixed(4);
+        
+        if (data.thbSgdRate) STATE.fxRate = parseFloat(data.thbSgdRate);
+        if (data.dFx !== undefined) STATE.dFx = parseFloat(data.dFx);
+
+        STATE.serverSynced = true;
+        dotServer.classList.remove("offline");
+        
+        const updateText = `ดึงข้อมูลล่าสุดเมื่อ: ${data.timestamp || "ไม่ระบุเวลา"} จากเซิร์ฟเวอร์`;
+        infoProxyDiesel.innerText = updateText;
+        infoProxyDiesel.style.color = "#38A169";
+        infoProxyG95.innerText = updateText;
+        infoProxyG95.style.color = "#38A169";
+        lastUpdateInfo.innerText = updateText;
+        lastUpdateInfo.style.color = "#38A169";
+
+      } catch (error) {
+        console.error("Database fetch error:", error);
+        STATE.serverSynced = false;
+        dotServer.classList.add("offline");
+        const errText = "ระบบ Backend กำลังประมวลผล หรือ ตลาดปิดทำการ";
+        infoProxyDiesel.innerText = errText;
+        infoProxyDiesel.style.color = "#E53E3E";
+        infoProxyG95.innerText = errText;
+        infoProxyG95.style.color = "#E53E3E";
+      } finally {
+        if(isManualClick) {
+          btnSyncServer.disabled = false;
+          btnProxyDiesel.innerText = "ดึงค่าจากระบบ";
+          btnProxyG95.innerText = "ดึงค่าจากระบบ";
+        }
+        calculate(); // ให้ HTML คำนวณตาม UI เพื่อให้ผู้ใช้สามารถปรับแต่งแก้ค่าเล่นเองได้
+      }
+    }
+
+    function calculate() {
+      STATE.diesel.yesterdayMargin = parseFloat(inputMarginDiesel.value) || 2.0000;
+      STATE.diesel.targetMargin = parseFloat(inputTargetDiesel.value) || 1.9100;
+      STATE.g95.yesterdayMargin = parseFloat(inputMarginG95.value) || 3.3500;
+      STATE.g95.targetMargin = parseFloat(inputTargetG95.value) || 3.2500;
+
+      if (!STATE.fxRate || STATE.fxRate === 0) STATE.fxRate = 26.1346;
+
+      const dMopsDiesel = parseFloat(inputMopsDiesel.value) || 0;
+      const dMopsG95 = parseFloat(inputMopsG95.value) || 0;
+
+      const gapDiesel = STATE.diesel.targetMargin - STATE.diesel.yesterdayMargin;
+      const costMopsDiesel = dMopsDiesel * STATE.diesel.factorMops;
+      const costFxDiesel = STATE.dFx * STATE.diesel.factorFx;
+      const statusDiesel = gapDiesel - (costMopsDiesel + costFxDiesel);
+
+      const gapG95 = STATE.g95.targetMargin - STATE.g95.yesterdayMargin;
+      const costMopsG95 = dMopsG95 * STATE.g95.factorMops;
+      const costFxG95 = STATE.dFx * STATE.g95.factorFx;
+      const statusG95 = gapG95 - (costMopsG95 + costFxG95);
+
+      renderStatus(resDiesel, statusDiesel);
+      renderStatus(resG95, statusG95);
+      renderAdvance(dMopsDiesel, gapDiesel, costMopsDiesel, costFxDiesel, statusDiesel,
+                    dMopsG95, gapG95, costMopsG95, costFxG95, statusG95);
+    }
+
+    function renderStatus(el, val) {
+      const absVal = Math.abs(val).toFixed(2);
+      if (val > 0.005) { el.className = "result-value down"; el.innerHTML = `-${absVal} <span class="arrow">↓</span>`; }
+      else if (val < -0.005) { el.className = "result-value up"; el.innerHTML = `+${absVal} <span class="arrow">↑</span>`; }
+      else { el.className = "result-value"; el.innerHTML = `0.00`; }
+    }
+
+    function renderAdvance(dMopsD, gapD, costMopsD, costFxD, statusD, dMopsG, gapG, costMopsG, costFxG, statusG) {
+      advDieselCalc.innerHTML = `<strong>ดีเซล B7 (Target ${STATE.diesel.targetMargin.toFixed(2)}):</strong><br/>• ส่วนต่างมาร์จิ้น: ${gapD >= 0 ? '+' : ''}${gapD.toFixed(4)}<br/>• ต้นทุนรวม (MOPS+FX): ${(costMopsD + costFxD) >= 0 ? '+' : ''}${(costMopsD + costFxD).toFixed(4)}<br/>• ผลลัพธ์สถานะ: ${statusD >= 0 ? '+' : ''}${statusD.toFixed(4)} บาท/ลิตร`;
+      advG95Calc.innerHTML = `<strong>แก๊สโซฮอล์ 95 (Target ${STATE.g95.targetMargin.toFixed(2)}):</strong><br/>• ส่วนต่างมาร์จิ้น: ${gapG >= 0 ? '+' : ''}${gapG.toFixed(4)}<br/>• ต้นทุนรวม (MOPS+FX): ${(costMopsG + costFxG) >= 0 ? '+' : ''}${(costMopsG + costFxG).toFixed(4)}<br/>• ผลลัพธ์สถานะ: ${statusG >= 0 ? '+' : ''}${statusG.toFixed(4)} บาท/ลิตร`;
+      advFxVal.innerText = STATE.fxRate.toFixed(4);
+      const advDfxSpan = document.getElementById("advDfxVal");
+      if (advDfxSpan) advDfxSpan.innerText = (STATE.dFx >= 0 ? "+" : "") + STATE.dFx.toFixed(4);
+    }
+
+    // Events สำหรับคำนวณสดเมื่อผู้ใช้พิมพ์แก้ไขตัวเลขเองใน HTML (Manual Override)
+    inputMopsDiesel.addEventListener("input", calculate);
+    inputMopsG95.addEventListener("input", calculate);
+    inputMarginDiesel.addEventListener("input", calculate);
+    inputTargetDiesel.addEventListener("input", calculate);
+    inputMarginG95.addEventListener("input", calculate);
+    inputTargetG95.addEventListener("input", calculate);
+
+    btnToggleAdvance.addEventListener("click", () => {
+      STATE.showAdvance = !STATE.showAdvance;
+      btnToggleAdvance.classList.toggle("active", STATE.showAdvance);
+      advancePanel.classList.toggle("show", STATE.showAdvance);
+    });
+
+    btnSyncServer.addEventListener("click", () => loadDataFromServer(true));
+    btnProxyDiesel.addEventListener("click", () => loadDataFromServer(true));
+    btnProxyG95.addEventListener("click", () => loadDataFromServer(true));
+
+    // โหลดข้อมูลครั้งแรกเมื่อเปิดหน้าเว็บ
+    loadDataFromServer();
+  </script>
+</body>
+</html>
