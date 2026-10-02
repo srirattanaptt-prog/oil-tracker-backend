@@ -2,7 +2,8 @@ name: Update Fuel Data
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    # เปลี่ยนจาก '0 * * * *' เป็นเลขนาทีอื่นเพื่อเลี่ยงคิวชนกับคนทั่วโลก
+    - cron: '14 * * * *'
   workflow_dispatch:
 
 jobs:
