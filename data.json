@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-10-21 16:00:58",
-  "thbSgdRate": 26.317,
+  "timestamp": "2026-10-21 17:00:51",
+  "thbSgdRate": 26.3162,
   "dFx": 0.0,
-  "dieselMopsDiff": 1.46,
-  "g95MopsDiff": -1.49,
+  "dieselMopsDiff": 1.08,
+  "g95MopsDiff": -1.44,
   "eppoDieselMargin": 2.0,
   "eppoG95Margin": 3.35
 }
